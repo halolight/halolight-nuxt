@@ -28,6 +28,10 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     // 用户信息
     user: null as User | null,
+    // 已登录过的账号列表
+    accounts: [] as User[],
+    // 当前账号 ID
+    activeAccountId: '' as string,
     // 认证令牌
     token: '',
     // 加载状态
@@ -94,7 +98,7 @@ export const useAuthStore = defineStore('auth', {
         }
 
         // 设置用户信息
-        this.user = {
+        const user: User = {
           id: '1',
           name: `${config.public.brandName} Admin`,
           email: payload.email,
@@ -102,7 +106,10 @@ export const useAuthStore = defineStore('auth', {
           role: 'Administrator',
           permissions: ['*'],
         }
+        this.user = user
+        this.activeAccountId = user.id
         this.token = 'mock-token-' + Date.now()
+        this.upsertAccount(user)
 
         return this.user
       } catch (e) {
@@ -132,7 +139,7 @@ export const useAuthStore = defineStore('auth', {
         }
 
         // 模拟注册成功
-        this.user = {
+        const user: User = {
           id: '2',
           name: payload.name,
           email: payload.email,
@@ -140,7 +147,10 @@ export const useAuthStore = defineStore('auth', {
           role: 'User',
           permissions: ['dashboard:view', 'profile:edit'],
         }
+        this.user = user
+        this.activeAccountId = user.id
         this.token = 'mock-token-' + Date.now()
+        this.upsertAccount(user)
 
         return this.user
       } catch (e) {
@@ -154,6 +164,7 @@ export const useAuthStore = defineStore('auth', {
     // 登出
     logout() {
       this.user = null
+      this.activeAccountId = ''
       this.token = ''
       this.error = ''
     },
@@ -227,10 +238,72 @@ export const useAuthStore = defineStore('auth', {
         this.loading = false
       }
     },
+
+    // 切换账号
+    async switchAccount(id: string) {
+      const target = this.accounts.find((a) => a.id === id)
+      if (!target) {
+        this.error = '账号不存在'
+        throw new Error('账号不存在')
+      }
+
+      this.user = target
+      this.activeAccountId = target.id
+      this.token = 'mock-token-' + Date.now()
+      this.error = ''
+    },
+
+    // 添加或更新账号缓存
+    upsertAccount(user: User) {
+      const idx = this.accounts.findIndex((a) => a.id === user.id)
+      if (idx === -1) {
+        this.accounts.push(user)
+      } else {
+        this.accounts[idx] = user
+      }
+    },
+
+    // 移除账号
+    removeAccount(id: string) {
+      this.accounts = this.accounts.filter((a) => a.id !== id)
+      if (this.activeAccountId === id) {
+        this.logout()
+      }
+    },
+
+    // 加载账号列表
+    async loadAccounts() {
+      // 在实际应用中，这里应该从服务器加载
+      // 这里仅返回当前缓存的账号列表
+      return this.accounts
+    },
+
+    // 检查认证状态
+    async checkAuth() {
+      if (!this.token) {
+        this.user = null
+        this.isAuthenticated = false
+        return
+      }
+
+      // 在实际应用中，这里应该验证 token
+      // 这里仅检查本地缓存
+      if (this.user && this.activeAccountId) {
+        return
+      }
+
+      // 尝试从 accounts 恢复
+      if (this.activeAccountId) {
+        const account = this.accounts.find((a) => a.id === this.activeAccountId)
+        if (account) {
+          this.user = account
+        }
+      }
+    },
   },
 
   persist: {
     key: 'halolight-auth',
-    pick: ['user', 'token'],
+    pick: ['user', 'token', 'accounts', 'activeAccountId'],
   },
 })
