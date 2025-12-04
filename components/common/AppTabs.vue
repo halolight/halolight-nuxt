@@ -337,6 +337,6 @@ function getRouteTitle(path: string): string {
 
 .fade-enter-from,
 .fade-leave-to {
-  opacity 0;
+  opacity: 0;
 }
 </style>
