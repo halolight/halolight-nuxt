@@ -162,8 +162,8 @@ export default defineNuxtPlugin((nuxtApp) => {
   if (import.meta.client) {
     connect()
 
-    // 清理
-    nuxtApp.hook('app:unmounted', () => {
+    // 清理 - 使用 window beforeunload 事件而非 nuxt hook
+    window.addEventListener('beforeunload', () => {
       socket?.close()
     })
   }

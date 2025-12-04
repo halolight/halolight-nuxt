@@ -282,7 +282,7 @@ export const useAuthStore = defineStore('auth', {
     async checkAuth() {
       if (!this.token) {
         this.user = null
-        this.isAuthenticated = false
+        // isAuthenticated is a computed getter, no need to set it
         return
       }
 
