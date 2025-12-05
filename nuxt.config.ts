@@ -12,6 +12,19 @@ export default defineNuxtConfig({
     '@nuxt/eslint',
   ],
 
+  // Vite 配置 - API 代理
+  vite: {
+    server: {
+      proxy: {
+        '/api': {
+          target: process.env.NUXT_API_BACKEND_URL || 'http://localhost:3000',
+          changeOrigin: true,
+          secure: false,
+        },
+      },
+    },
+  },
+
   // CSS 配置 - 使用 Tailwind CDN，避免 PostCSS import.meta 兼容问题
   css: ['~/assets/css/main.css'],
 
